@@ -40,6 +40,7 @@ async def test_register_login_and_duplicate_email(client: AsyncClient):
     response = await client.post("/register", json=payload)
     assert response.status_code == 201
     assert response.json()["email"] == payload["email"]
+    assert response.json()["role"] == "passenger"
     assert "hashed_password" not in response.json()
 
     duplicate = await client.post("/register", json=payload)

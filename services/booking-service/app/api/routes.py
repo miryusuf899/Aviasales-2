@@ -19,9 +19,8 @@ def identity_from_request(
     authorization: str | None,
 ) -> tuple[int, str]:
     header_user_id = request.headers.get("x-user-id")
-    header_role = request.headers.get("x-user-role", "passenger")
-    if header_user_id:
-        return int(header_user_id), header_role
+    if header_user_id and not authorization:
+        raise AppError("AUTH_REQUIRED", "Требуется Bearer-токен", 401)
     payload = decode_token(
         bearer_token(authorization),
         secret_key=settings.jwt_secret_key,
@@ -140,8 +139,18 @@ async def cancel_booking(
 async def update_status(
     booking_id: int,
     payload: BookingStatusUpdate,
+    authorization: str | None = Header(default=None),
+    x_internal_token: str | None = Header(default=None, alias="X-Internal-Token"),
     session: AsyncSession = Depends(get_session),
 ) -> Booking:
+    if x_internal_token != settings.internal_service_token:
+        payload_token = decode_token(
+            bearer_token(authorization),
+            secret_key=settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
+        )
+        if payload_token.get("role") != "admin":
+            raise AppError("FORBIDDEN", "Доступ разрешён только администратору", 403)
     booking = await get_booking_model(session, booking_id)
     booking.status = payload.status
     await session.commit()

@@ -48,6 +48,7 @@ async def change_flight_seats(flight_id: int, delta: int) -> dict[str, Any]:
             return await client.patch(
                 f"{settings.flight_service_url}/flights/{flight_id}/seats",
                 json={"delta": delta},
+                headers={"X-Internal-Token": settings.internal_service_token},
             )
 
     try:

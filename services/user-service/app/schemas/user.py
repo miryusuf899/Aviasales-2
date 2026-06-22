@@ -1,4 +1,9 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
+UserRole = Literal["passenger", "admin"]
 
 
 class UserBase(BaseModel):
@@ -6,10 +11,14 @@ class UserBase(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     phone: str | None = None
-    role: str = "passenger"
+    role: UserRole = "passenger"
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    email: EmailStr
+    first_name: str | None = None
+    last_name: str | None = None
+    phone: str | None = None
     password: str = Field(min_length=6, max_length=128)
 
 

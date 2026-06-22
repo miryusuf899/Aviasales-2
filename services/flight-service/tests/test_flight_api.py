@@ -15,6 +15,19 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.db import session as db_session
 from app.main import app
 from aviakit.db import Base
+from aviakit.security import create_token
+
+
+def admin_headers() -> dict[str, str]:
+    token = create_token(
+        subject="1",
+        email="admin@example.com",
+        role="admin",
+        secret_key="change-me",
+        algorithm="HS256",
+        expires_delta=__import__("datetime").timedelta(minutes=30),
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture()
@@ -31,8 +44,20 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_flight_seats_cannot_go_negative(client: AsyncClient):
-    dyu = (await client.post("/airports", json={"code": "DYU", "city": "Dushanbe", "country": "TJ"})).json()
-    ist = (await client.post("/airports", json={"code": "IST", "city": "Istanbul", "country": "TR"})).json()
+    dyu = (
+        await client.post(
+            "/airports",
+            json={"code": "DYU", "city": "Dushanbe", "country": "TJ"},
+            headers=admin_headers(),
+        )
+    ).json()
+    ist = (
+        await client.post(
+            "/airports",
+            json={"code": "IST", "city": "Istanbul", "country": "TR"},
+            headers=admin_headers(),
+        )
+    ).json()
     flight = (
         await client.post(
             "/flights",
@@ -46,13 +71,22 @@ async def test_flight_seats_cannot_go_negative(client: AsyncClient):
                 "price": "250.00",
                 "currency": "USD",
             },
+            headers=admin_headers(),
         )
     ).json()
 
-    ok = await client.patch(f"/flights/{flight['id']}/seats", json={"delta": -1})
+    ok = await client.patch(
+        f"/flights/{flight['id']}/seats",
+        json={"delta": -1},
+        headers={"X-Internal-Token": "change-me-internal"},
+    )
     assert ok.status_code == 200
     assert ok.json()["available_seats"] == 0
 
-    fail = await client.patch(f"/flights/{flight['id']}/seats", json={"delta": -1})
+    fail = await client.patch(
+        f"/flights/{flight['id']}/seats",
+        json={"delta": -1},
+        headers={"X-Internal-Token": "change-me-internal"},
+    )
     assert fail.status_code == 409
     assert fail.json()["error"]["code"] == "NO_AVAILABLE_SEATS"

@@ -49,7 +49,7 @@ async def register(payload: UserCreate, session: AsyncSession = Depends(get_sess
         first_name=payload.first_name,
         last_name=payload.last_name,
         phone=payload.phone,
-        role=payload.role,
+        role="passenger",
     )
     session.add(user)
     await session.commit()

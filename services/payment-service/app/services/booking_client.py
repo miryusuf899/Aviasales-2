@@ -11,6 +11,7 @@ async def update_booking_status(booking_id: int, status: str) -> None:
             return await client.patch(
                 f"{settings.booking_service_url}/bookings/{booking_id}/status",
                 json={"status": status},
+                headers={"X-Internal-Token": settings.internal_service_token},
             )
 
     try:

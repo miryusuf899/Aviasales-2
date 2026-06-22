@@ -1,15 +1,36 @@
 from datetime import date, datetime, time
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy import Select, and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.session import get_session
 from app.models.flight import Airport, Flight
 from app.schemas.flight import AirportCreate, AirportOut, FlightCreate, FlightOut, FlightUpdate, SeatsPatch
 from aviakit.errors import AppError, ErrorResponse
+from aviakit.security import bearer_token, decode_token
 
 router = APIRouter(tags=["flights"])
+
+
+def require_admin(authorization: str | None = Header(default=None)) -> None:
+    payload = decode_token(
+        bearer_token(authorization),
+        secret_key=settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+    )
+    if payload.get("role") != "admin":
+        raise AppError("FORBIDDEN", "Доступ разрешён только администратору", 403)
+
+
+def require_admin_or_internal(
+    authorization: str | None = Header(default=None),
+    x_internal_token: str | None = Header(default=None, alias="X-Internal-Token"),
+) -> None:
+    if x_internal_token == settings.internal_service_token:
+        return
+    require_admin(authorization)
 
 
 def flight_out(flight: Flight) -> FlightOut:
@@ -41,7 +62,11 @@ async def get_flight_model(session: AsyncSession, flight_id: int) -> Flight:
 
 
 @router.post("/airports", response_model=AirportOut, status_code=201)
-async def create_airport(payload: AirportCreate, session: AsyncSession = Depends(get_session)) -> Airport:
+async def create_airport(
+    payload: AirportCreate,
+    _: None = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+) -> Airport:
     airport = Airport(code=payload.code.upper(), city=payload.city, country=payload.country)
     session.add(airport)
     await session.commit()
@@ -55,7 +80,11 @@ async def list_airports(session: AsyncSession = Depends(get_session)) -> list[Ai
 
 
 @router.post("/flights", response_model=FlightOut, status_code=201)
-async def create_flight(payload: FlightCreate, session: AsyncSession = Depends(get_session)) -> FlightOut:
+async def create_flight(
+    payload: FlightCreate,
+    _: None = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+) -> FlightOut:
     await get_airport(session, payload.from_airport_id)
     await get_airport(session, payload.to_airport_id)
     flight = Flight(**payload.model_dump())
@@ -101,6 +130,7 @@ async def get_flight(flight_id: int, session: AsyncSession = Depends(get_session
 async def update_flight(
     flight_id: int,
     payload: FlightUpdate,
+    _: None = Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ) -> FlightOut:
     flight = await get_flight_model(session, flight_id)
@@ -117,7 +147,11 @@ async def update_flight(
 
 
 @router.delete("/flights/{flight_id}", status_code=204)
-async def delete_flight(flight_id: int, session: AsyncSession = Depends(get_session)) -> None:
+async def delete_flight(
+    flight_id: int,
+    _: None = Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+) -> None:
     flight = await get_flight_model(session, flight_id)
     await session.delete(flight)
     await session.commit()
@@ -131,6 +165,7 @@ async def delete_flight(flight_id: int, session: AsyncSession = Depends(get_sess
 async def change_seats(
     flight_id: int,
     payload: SeatsPatch,
+    _: None = Depends(require_admin_or_internal),
     session: AsyncSession = Depends(get_session),
 ) -> FlightOut:
     result = await session.execute(

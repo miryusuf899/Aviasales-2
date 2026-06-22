@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
+    internal_service_token: str = "change-me-internal"
 
 
 settings = Settings()

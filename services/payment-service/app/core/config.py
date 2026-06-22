@@ -6,6 +6,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/payments_db"
     booking_service_url: str = "http://localhost:8003"
+    jwt_secret_key: str = "change-me"
+    jwt_algorithm: str = "HS256"
+    internal_service_token: str = "change-me-internal"
     kafka_bootstrap_servers: str = "localhost:9092"
     kafka_notifications_topic: str = "notifications"
     kafka_enabled: bool = False
