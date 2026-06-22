@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,7 @@ from aviakit.errors import AppError, ErrorResponse
 from aviakit.security import bearer_token, decode_token, hash_password, verify_password
 
 router = APIRouter(tags=["users"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def user_by_id(session: AsyncSession, user_id: int) -> User:
@@ -21,9 +23,10 @@ async def user_by_id(session: AsyncSession, user_id: int) -> User:
 
 
 async def current_user(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> User:
+    authorization = f"{credentials.scheme} {credentials.credentials}" if credentials else None
     payload = decode_token(
         bearer_token(authorization),
         secret_key=settings.jwt_secret_key,
@@ -67,9 +70,10 @@ async def login(payload: LoginRequest, session: AsyncSession = Depends(get_sessi
 
 @router.post("/refresh", response_model=TokenPair)
 async def refresh(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
+    authorization = f"{credentials.scheme} {credentials.credentials}" if credentials else None
     payload = decode_token(
         bearer_token(authorization),
         secret_key=settings.jwt_secret_key,
