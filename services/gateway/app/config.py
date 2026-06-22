@@ -10,7 +10,12 @@ class Settings(BaseSettings):
     payment_service_url: str = "http://localhost:8004"
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
-    cors_origins: str = "*"
+    cors_origins: str = (
+        "http://localhost:3000,"
+        "http://127.0.0.1:3000,"
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173"
+    )
 
     @property
     def routes(self) -> dict[str, str]:

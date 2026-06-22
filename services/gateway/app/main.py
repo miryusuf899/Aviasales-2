@@ -3,7 +3,8 @@ from time import perf_counter
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import Response
 
 from app.config import settings
 from aviakit.errors import AppError, error_response, install_error_handlers
@@ -18,12 +19,15 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Requested-With"],
+    expose_headers=["X-Response-Time-Ms"],
 )
 
 
 def is_public_request(request: Request) -> bool:
     path = request.url.path
+    if request.method == "OPTIONS":
+        return True
     if path in {"/health", "/docs", "/openapi.json", "/redoc"}:
         return True
     if path in {"/api/users/register", "/api/users/login", "/api/users/refresh"}:
@@ -104,40 +108,22 @@ async def proxy(request: Request) -> Response:
     )
 
 
-@app.api_route(
-    "/api/users/{path:path}",
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    tags=["proxy"],
-)
-async def proxy_users(request: Request) -> Response:
-    return await proxy(request)
+def make_proxy_endpoint():
+    async def proxy_endpoint(request: Request, path: str) -> Response:
+        return await proxy(request)
+
+    return proxy_endpoint
 
 
-@app.api_route(
-    "/api/flights/{path:path}",
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    tags=["proxy"],
-)
-async def proxy_flights(request: Request) -> Response:
-    return await proxy(request)
-
-
-@app.api_route(
-    "/api/bookings/{path:path}",
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    tags=["proxy"],
-)
-async def proxy_bookings(request: Request) -> Response:
-    return await proxy(request)
-
-
-@app.api_route(
-    "/api/payments/{path:path}",
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    tags=["proxy"],
-)
-async def proxy_payments(request: Request) -> Response:
-    return await proxy(request)
+for service_name in ["users", "flights", "bookings", "payments"]:
+    for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
+        app.add_api_route(
+            f"/api/{service_name}/{{path:path}}",
+            make_proxy_endpoint(),
+            methods=[method],
+            tags=["proxy"],
+            operation_id=f"proxy_{service_name}_{method.lower()}",
+        )
 
 
 @app.get("/health")
@@ -148,3 +134,55 @@ async def health() -> dict[str, str]:
 @app.get("/routes")
 async def routes() -> dict[str, str]:
     return settings.routes
+
+
+@app.get("/frontend-config", tags=["frontend"])
+async def frontend_config() -> dict[str, object]:
+    return {
+        "api_base_url": "http://localhost:8000/api",
+        "auth_header": "Authorization: Bearer <access_token>",
+        "cors_origins": origins,
+        "public_routes": [
+            "POST /api/users/register",
+            "POST /api/users/login",
+            "POST /api/users/refresh",
+            "GET /api/flights",
+            "GET /api/flights/{id}",
+        ],
+    }
+
+
+def custom_openapi() -> dict:
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+        description=(
+            "Frontend should call only the Gateway: http://localhost:8000/api. "
+            "Protected routes require Authorization: Bearer <access_token>."
+        ),
+    )
+    components = schema.setdefault("components", {})
+    security_schemes = components.setdefault("securitySchemes", {})
+    security_schemes["BearerAuth"] = {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
+
+    for path, methods in schema.get("paths", {}).items():
+        for method, operation in methods.items():
+            if method not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            is_public = (
+                path in {"/health", "/routes", "/frontend-config"}
+                or path.startswith("/api/flights") and method == "get"
+                or path.startswith("/api/users") and method == "post"
+            )
+            if not is_public:
+                operation.setdefault("security", [{"BearerAuth": []}])
+
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi

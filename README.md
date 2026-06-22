@@ -40,4 +40,14 @@ pytest
 ```
 
 API-контракты зафиксированы в [docs/api-contracts.md](docs/api-contracts.md).
+
+## Frontend
+
+Фронтенд должен обращаться только к Gateway:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+Подробности и примеры запросов: [docs/frontend-integration.md](docs/frontend-integration.md).
 # Aviasales-2
