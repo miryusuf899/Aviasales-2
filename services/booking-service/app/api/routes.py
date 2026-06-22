@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Header, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,13 +13,19 @@ from aviakit.errors import AppError, ErrorResponse
 from aviakit.security import bearer_token, decode_token
 
 router = APIRouter(tags=["bookings"])
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def authorization_value(credentials: HTTPAuthorizationCredentials | None) -> str | None:
+    return f"{credentials.scheme} {credentials.credentials}" if credentials else None
 
 
 def identity_from_request(
     request: Request,
-    authorization: str | None,
+    credentials: HTTPAuthorizationCredentials | None,
 ) -> tuple[int, str]:
     header_user_id = request.headers.get("x-user-id")
+    authorization = authorization_value(credentials)
     if header_user_id and not authorization:
         raise AppError("AUTH_REQUIRED", "Требуется Bearer-токен", 401)
     payload = decode_token(
@@ -45,10 +52,10 @@ async def get_booking_model(session: AsyncSession, booking_id: int) -> Booking:
 async def create_booking(
     payload: BookingCreate,
     request: Request,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> Booking:
-    current_user_id, role = identity_from_request(request, authorization)
+    current_user_id, role = identity_from_request(request, credentials)
     user_id = payload.user_id or current_user_id
     if user_id != current_user_id and role != "admin":
         raise AppError("FORBIDDEN", "Нельзя создать бронь для другого пользователя", 403)
@@ -85,10 +92,10 @@ async def create_booking(
 @router.get("/bookings", response_model=list[BookingOut])
 async def list_bookings(
     request: Request,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> list[Booking]:
-    user_id, role = identity_from_request(request, authorization)
+    user_id, role = identity_from_request(request, credentials)
     stmt = select(Booking).order_by(Booking.created_at.desc())
     if role != "admin":
         stmt = stmt.where(Booking.user_id == user_id)
@@ -99,10 +106,10 @@ async def list_bookings(
 async def get_booking(
     booking_id: int,
     request: Request,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> Booking:
-    user_id, role = identity_from_request(request, authorization)
+    user_id, role = identity_from_request(request, credentials)
     booking = await get_booking_model(session, booking_id)
     if booking.user_id != user_id and role != "admin":
         raise AppError("FORBIDDEN", "Нет доступа к этому бронированию", 403)
@@ -113,10 +120,10 @@ async def get_booking(
 async def cancel_booking(
     booking_id: int,
     request: Request,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> Booking:
-    user_id, role = identity_from_request(request, authorization)
+    user_id, role = identity_from_request(request, credentials)
     booking = await get_booking_model(session, booking_id)
     if booking.user_id != user_id and role != "admin":
         raise AppError("FORBIDDEN", "Нет доступа к этому бронированию", 403)
@@ -139,11 +146,12 @@ async def cancel_booking(
 async def update_status(
     booking_id: int,
     payload: BookingStatusUpdate,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     x_internal_token: str | None = Header(default=None, alias="X-Internal-Token"),
     session: AsyncSession = Depends(get_session),
 ) -> Booking:
     if x_internal_token != settings.internal_service_token:
+        authorization = authorization_value(credentials)
         payload_token = decode_token(
             bearer_token(authorization),
             secret_key=settings.jwt_secret_key,

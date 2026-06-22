@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,9 +15,13 @@ from aviakit.errors import AppError
 from aviakit.security import bearer_token, decode_token
 
 router = APIRouter(tags=["payments"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def require_authenticated(authorization: str | None = Header(default=None)) -> None:
+def require_authenticated(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> None:
+    authorization = f"{credentials.scheme} {credentials.credentials}" if credentials else None
     decode_token(
         bearer_token(authorization),
         secret_key=settings.jwt_secret_key,

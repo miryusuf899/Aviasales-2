@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 
 from fastapi import APIRouter, Depends, Header, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import Select, and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,11 +13,18 @@ from aviakit.errors import AppError, ErrorResponse
 from aviakit.security import bearer_token, decode_token
 
 router = APIRouter(tags=["flights"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def require_admin(authorization: str | None = Header(default=None)) -> None:
+def authorization_value(credentials: HTTPAuthorizationCredentials | None) -> str | None:
+    return f"{credentials.scheme} {credentials.credentials}" if credentials else None
+
+
+def require_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> None:
     payload = decode_token(
-        bearer_token(authorization),
+        bearer_token(authorization_value(credentials)),
         secret_key=settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
     )
@@ -25,12 +33,12 @@ def require_admin(authorization: str | None = Header(default=None)) -> None:
 
 
 def require_admin_or_internal(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     x_internal_token: str | None = Header(default=None, alias="X-Internal-Token"),
 ) -> None:
     if x_internal_token == settings.internal_service_token:
         return
-    require_admin(authorization)
+    require_admin(credentials)
 
 
 def flight_out(flight: Flight) -> FlightOut:
