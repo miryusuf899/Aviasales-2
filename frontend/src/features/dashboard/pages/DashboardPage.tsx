@@ -2,7 +2,7 @@ import { Bell, CreditCard, Gift, HelpCircle, Plane, Settings, User } from 'lucid
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/features/auth/api/AuthContext';
+import { useAuth } from '@/features/auth/api/useAuth';
 import { useAsync } from '@/shared/hooks/useAsync';
 import { initials } from '@/shared/lib/formatters';
 import { Button } from '@/shared/ui/Button';
@@ -19,13 +19,13 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [filter, setFilter] = useState<FilterKey>('all');
-  const { data, loading, error, reload } = useAsync(dashboardApi.listBookings, []);
+  const { data, loading, error, reload } = useAsync(dashboardApi.listBookings);
 
-  const bookings = data ?? [];
-  const filtered = useMemo(
-    () => (filter === 'all' ? bookings : bookings.filter((booking) => booking.status === filter)),
-    [bookings, filter],
-  );
+  const bookings = useMemo(() => data ?? [], [data]);
+  const filtered = useMemo(() => {
+    if (filter === 'all') return bookings;
+    return bookings.filter((booking) => booking.status === filter);
+  }, [bookings, filter]);
 
   const cancelBooking = async (bookingId: string) => {
     try {

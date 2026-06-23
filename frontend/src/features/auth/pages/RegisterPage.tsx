@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/Button';
 import { FormField } from '@/shared/ui/FormField';
 import { ErrorState } from '@/shared/ui/StatusView';
 
-import { useAuth } from '../api/AuthContext';
+import { useAuth } from '../api/useAuth';
 import { AuthLayout } from '../components/AuthLayout';
 
 export function RegisterPage() {

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import { AuthProvider, useAuth } from '@/features/auth/api/AuthContext';
+import { AuthProvider } from '@/features/auth/api/AuthContext';
+import { useAuth } from '@/features/auth/api/useAuth';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { BookingSuccessPage } from '@/features/booking/pages/BookingSuccessPage';

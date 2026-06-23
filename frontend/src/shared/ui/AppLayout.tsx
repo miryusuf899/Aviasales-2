@@ -2,7 +2,7 @@ import { LogOut, Menu, Plane, X } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/features/auth/api/AuthContext';
+import { useAuth } from '@/features/auth/api/useAuth';
 import { initials } from '@/shared/lib/formatters';
 
 export function AppLayout() {

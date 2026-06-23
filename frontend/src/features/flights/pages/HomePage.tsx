@@ -11,7 +11,7 @@ import { SearchPanel } from '../components/SearchPanel';
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { data, loading, error, reload } = useAsync(contentApi.getMarketing, []);
+  const { data, loading, error, reload } = useAsync(contentApi.getMarketing);
 
   if (loading) return <LoadingState label="Preparing travel deals..." />;
   if (error || !data) {

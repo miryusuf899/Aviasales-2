@@ -2,7 +2,7 @@ import { ArrowLeft, CalendarDays, IdCard, Mail, Phone, User } from 'lucide-react
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/features/auth/api/AuthContext';
+import { useAuth } from '@/features/auth/api/useAuth';
 import type { FlightOption } from '@/features/flights/types';
 import { selectedFlightStorage } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/Button';

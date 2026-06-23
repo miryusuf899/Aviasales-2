@@ -1,5 +1,5 @@
 import { CalendarDays, Plane, Search, Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAsync } from '@/shared/hooks/useAsync';
@@ -17,7 +17,7 @@ export function ResultsPage() {
   const [selectedStops, setSelectedStops] = useState<number[]>([]);
   const [sort, setSort] = useState<'cheapest' | 'fastest' | 'best'>('cheapest');
 
-  const { data: flights, loading, error, reload } = useAsync(
+  const searchFlights = useCallback(
     () =>
       flightsApi.searchFlights({
         from: searchParams.get('from') ?? undefined,
@@ -27,6 +27,7 @@ export function ResultsPage() {
       }),
     [searchParams],
   );
+  const { data: flights, loading, error, reload } = useAsync(searchFlights);
 
   const visibleFlights = useMemo(() => {
     return [...(flights ?? [])]

@@ -1,4 +1,5 @@
 import { ArrowLeft, Check, MonitorPlay, Utensils, Wifi, Wind, X } from 'lucide-react';
+import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useAsync } from '@/shared/hooks/useAsync';
@@ -14,7 +15,8 @@ import { flightsApi } from '../api/flightsApi';
 export function FlightDetailsPage() {
   const { flightId = '' } = useParams();
   const navigate = useNavigate();
-  const { data: flight, loading, error, reload } = useAsync(() => flightsApi.getFlight(flightId), [flightId]);
+  const loadFlight = useCallback(() => flightsApi.getFlight(flightId), [flightId]);
+  const { data: flight, loading, error, reload } = useAsync(loadFlight);
 
   if (loading) return <LoadingState label="Loading flight details..." />;
   if (error || !flight) {
