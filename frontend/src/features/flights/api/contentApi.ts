@@ -1,10 +1,17 @@
-import { mockClient } from '@/shared/api/httpClient';
+import { apiClient, mockClient } from '@/shared/api/httpClient';
+import { env } from '@/shared/config/env';
 
 import type { MarketingContent } from '../types';
 
 export const contentApi = {
   getMarketing: async () => {
-    const { data } = await mockClient.get<MarketingContent>('/marketing.json');
-    return data;
+    try {
+      const { data } = await apiClient.get<MarketingContent>('/content/marketing');
+      return data;
+    } catch (error) {
+      if (!env.useMockFallback) throw error;
+      const { data } = await mockClient.get<MarketingContent>('/marketing.json');
+      return data;
+    }
   },
 };

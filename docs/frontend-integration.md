@@ -11,8 +11,10 @@ VITE_API_BASE_URL=http://localhost:8000/api
 - `POST /api/users/register`
 - `POST /api/users/login`
 - `POST /api/users/refresh`
-- `GET /api/flights`
-- `GET /api/flights/{id}`
+- `GET /api/content/marketing`
+- `GET /api/flights/airports`
+- `GET /api/flights/flights`
+- `GET /api/flights/flights/{id}`
 
 ## Protected Requests
 
@@ -24,15 +26,15 @@ Authorization: Bearer <access_token>
 
 Protected routes:
 
-- `GET /api/users/me`
+- `GET /api/users/users/me`
 - `PUT /api/users/{id}`
-- `POST /api/bookings`
-- `GET /api/bookings`
-- `GET /api/bookings/{id}`
-- `DELETE /api/bookings/{id}`
-- `POST /api/payments`
-- `GET /api/payments`
-- `GET /api/payments/{id}`
+- `POST /api/bookings/bookings`
+- `GET /api/bookings/bookings`
+- `GET /api/bookings/bookings/{id}`
+- `DELETE /api/bookings/bookings/{id}`
+- `POST /api/payments/payments`
+- `GET /api/payments/payments`
+- `GET /api/payments/payments/{id}`
 
 Admin-only routes:
 
@@ -96,7 +98,7 @@ const tokens = await apiFetch<{
 ## Create Booking Example
 
 ```ts
-const booking = await apiFetch("/bookings", {
+const booking = await apiFetch("/bookings/bookings", {
   method: "POST",
   token: tokens.access_token,
   body: JSON.stringify({

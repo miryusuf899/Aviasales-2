@@ -1,4 +1,15 @@
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports: ["5173:5173"]
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api
+      VITE_USE_MOCK_FALLBACK: "false"
+    depends_on:
+      - gateway
+
   gateway:
     build:
       context: .

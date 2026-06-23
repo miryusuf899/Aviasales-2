@@ -27,6 +27,7 @@ export function AppLayout() {
         <nav className={`topbar__nav ${open ? 'is-open' : ''}`}>
           <NavLink to="/" onClick={close}>Flights</NavLink>
           <NavLink to="/dashboard" onClick={close}>My Bookings</NavLink>
+          {user?.role === 'admin' ? <NavLink to="/admin" onClick={close}>Admin</NavLink> : null}
           <a href="/#about" onClick={close}>About</a>
           <a href="/#contact" onClick={close}>Contact</a>
         </nav>

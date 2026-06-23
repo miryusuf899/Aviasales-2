@@ -7,6 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import Response
 
 from app.config import settings
+from app.content import MARKETING_CONTENT
 from aviakit.errors import AppError, error_response, install_error_handlers
 from aviakit.security import bearer_token, decode_token
 
@@ -31,6 +32,8 @@ def is_public_request(request: Request) -> bool:
     if path in {"/health", "/docs", "/openapi.json", "/redoc"}:
         return True
     if path in {"/api/users/register", "/api/users/login", "/api/users/refresh"}:
+        return True
+    if request.method == "GET" and path == "/api/content/marketing":
         return True
     if request.method == "GET" and path.startswith("/api/flights"):
         return True
@@ -126,6 +129,11 @@ for service_name in ["users", "flights", "bookings", "payments"]:
         )
 
 
+@app.get("/api/content/marketing", tags=["frontend"])
+async def marketing_content() -> dict[str, object]:
+    return MARKETING_CONTENT
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -146,8 +154,9 @@ async def frontend_config() -> dict[str, object]:
             "POST /api/users/register",
             "POST /api/users/login",
             "POST /api/users/refresh",
-            "GET /api/flights",
-            "GET /api/flights/{id}",
+            "GET /api/content/marketing",
+            "GET /api/flights/flights",
+            "GET /api/flights/flights/{id}",
         ],
     }
 
@@ -175,6 +184,7 @@ def custom_openapi() -> dict:
                 continue
             is_public = (
                 path in {"/health", "/routes", "/frontend-config"}
+                or path == "/api/content/marketing"
                 or path.startswith("/api/flights") and method == "get"
                 or path.startswith("/api/users") and method == "post"
             )

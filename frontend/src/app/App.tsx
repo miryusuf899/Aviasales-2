@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 
 import { AuthProvider } from '@/features/auth/api/AuthContext';
 import { useAuth } from '@/features/auth/api/useAuth';
+import { AdminPage } from '@/features/admin/pages/AdminPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { BookingSuccessPage } from '@/features/booking/pages/BookingSuccessPage';
@@ -20,6 +21,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) return <LoadingState label="Checking your session..." />;
   if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  return children;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <LoadingState label="Checking your session..." />;
+  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (user?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -62,6 +73,14 @@ export function App() {
                 <ProtectedRoute>
                   <DashboardPage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
               }
             />
             <Route path="/login" element={<LoginPage />} />
