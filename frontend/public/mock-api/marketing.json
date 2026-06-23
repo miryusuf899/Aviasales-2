@@ -1,0 +1,111 @@
+{
+  "stats": [
+    { "value": "2M+", "label": "Happy Travelers" },
+    { "value": "500+", "label": "Airlines Worldwide" },
+    { "value": "190+", "label": "Countries Covered" },
+    { "value": "4.9★", "label": "Average Rating" }
+  ],
+  "destinations": [
+    {
+      "city": "Paris",
+      "country": "France",
+      "code": "CDG",
+      "price": 489,
+      "imageUrl": "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=800&h=520&fit=crop&auto=format",
+      "tag": "Most Popular"
+    },
+    {
+      "city": "New York",
+      "country": "USA",
+      "code": "JFK",
+      "price": 612,
+      "imageUrl": "https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800&h=520&fit=crop&auto=format",
+      "tag": "Trending"
+    },
+    {
+      "city": "Tokyo",
+      "country": "Japan",
+      "code": "NRT",
+      "price": 798,
+      "imageUrl": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=520&fit=crop&auto=format",
+      "tag": "Hot Deal"
+    },
+    {
+      "city": "Dubai",
+      "country": "UAE",
+      "code": "DXB",
+      "price": 345,
+      "imageUrl": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=420&fit=crop&auto=format",
+      "tag": "Best Value"
+    },
+    {
+      "city": "London",
+      "country": "UK",
+      "code": "LHR",
+      "price": 421,
+      "imageUrl": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=420&fit=crop&auto=format",
+      "tag": ""
+    },
+    {
+      "city": "Bali",
+      "country": "Indonesia",
+      "code": "DPS",
+      "price": 654,
+      "imageUrl": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=420&fit=crop&auto=format",
+      "tag": "Escape"
+    }
+  ],
+  "benefits": [
+    {
+      "title": "Best Price Guarantee",
+      "description": "We match any lower price you find within 24 hours of booking, no questions asked.",
+      "color": "#2563eb"
+    },
+    {
+      "title": "24/7 Live Support",
+      "description": "Our travel experts are available around the clock to assist with any issue.",
+      "color": "#0ea5e9"
+    },
+    {
+      "title": "Flexible Changes",
+      "description": "Modify or cancel your booking up to 48 hours before departure for free.",
+      "color": "#8b5cf6"
+    },
+    {
+      "title": "Loyalty Rewards",
+      "description": "Earn SkyMiles on every booking and redeem them for free flights and upgrades.",
+      "color": "#f59e0b"
+    }
+  ],
+  "airlinePartners": [
+    { "name": "Emirates", "code": "EK", "color": "#C60C30" },
+    { "name": "Air France", "code": "AF", "color": "#002F87" },
+    { "name": "United", "code": "UA", "color": "#0033A0" },
+    { "name": "Lufthansa", "code": "LH", "color": "#05164D" },
+    { "name": "Qatar", "code": "QR", "color": "#5C0632" },
+    { "name": "Singapore", "code": "SQ", "color": "#012169" }
+  ],
+  "testimonials": [
+    {
+      "name": "Sarah Mitchell",
+      "role": "Business Traveler",
+      "rating": 5,
+      "text": "SkyBook completely transformed how I book flights. The interface is incredibly intuitive and I found deals I never would have discovered otherwise.",
+      "avatar": "SM"
+    },
+    {
+      "name": "James Okafor",
+      "role": "Frequent Flyer",
+      "rating": 5,
+      "text": "I've tried every flight booking platform out there. SkyBook is in a different league — fast, clean, and the price alerts are genuinely useful.",
+      "avatar": "JO"
+    },
+    {
+      "name": "Priya Kapoor",
+      "role": "Travel Blogger",
+      "rating": 5,
+      "text": "As someone who travels 200+ days a year, having a platform this reliable and beautiful is everything. My go-to for every trip.",
+      "avatar": "PK"
+    }
+  ]
+}
